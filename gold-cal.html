@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Calculator - Precious Metals Price Calculator</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=Philosopher:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #ffd700;
+            --gold-bright: #ffeb3b;
+            --gold-dark: #b8860b;
+            --red-blood: #8b0000;
+            --red-glow: #ff0000;
+            --black: #0a0a0a;
+            --gray-dark: #1a1a1a;
+            --gray-stone: #2d2d2d;
+            --text-light: #d4c5a0;
+            --border-gold: #8b7355;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        @keyframes ember {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(255, 68, 0, 0.4),
+                            inset 0 0 20px rgba(255, 68, 0, 0.2);
+            }
+            50% { 
+                box-shadow: 0 0 30px rgba(255, 68, 0, 0.6),
+                            inset 0 0 30px rgba(255, 68, 0, 0.3);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        body {
+            font-family: 'Philosopher', sans-serif;
+            background: #000;
+            color: var(--text-light);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            image-rendering: crisp-edges;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(139, 0, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(184, 134, 11, 0.1) 0%, transparent 50%),
+                linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+            pointer-events: none;
+            animation: flicker 3s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.3) 2px, rgba(0, 0, 0, 0.3) 4px);
+            pointer-events: none;
+            opacity: 0.05;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes shimmer {
+            0% { 
+                background-position: -200% center;
+                text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold-dark);
+            }
+            50% {
+                text-shadow: 0 0 20px var(--gold-bright), 0 0 30px var(--gold), 0 0 40px var(--gold-dark);
+            }
+            100% { 
+                background-position: 200% center;
+                text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold-dark);
+            }
+        }
+
+        @keyframes borderPulse {
+            0%, 100% {
+                box-shadow: 
+                    inset 0 0 20px rgba(139, 0, 0, 0.5),
+                    0 0 10px rgba(139, 0, 0, 0.3),
+                    0 0 20px rgba(139, 0, 0, 0.2);
+            }
+            50% {
+                box-shadow: 
+                    inset 0 0 30px rgba(139, 0, 0, 0.7),
+                    0 0 20px rgba(139, 0, 0, 0.5),
+                    0 0 30px rgba(139, 0, 0, 0.3);
+            }
+        }
+
+        #app {
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 3rem 0 2rem;
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+        }
+
+        header::before {
+            content: '⚔';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            font-size: 3rem;
+            color: var(--gold);
+            opacity: 0.3;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 5rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #ffd700 0%, #ffeb3b 30%, #b8860b 70%, #8b6914 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.5rem;
+            background-size: 200% 200%;
+            animation: shimmer 4s linear infinite;
+            text-transform: uppercase;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+            position: relative;
+        }
+
+        .subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            color: var(--text-light);
+            font-weight: 400;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            text-shadow: 0 0 5px rgba(212, 197, 160, 0.5);
+        }
+
+        .auth-container {
+            max-width: 500px;
+            margin: 4rem auto;
+            background: 
+                linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(10, 10, 10, 0.98) 100%);
+            border-radius: 4px;
+            padding: 3rem;
+            border: 3px solid;
+            border-image: linear-gradient(135deg, var(--border-gold), var(--gold-dark), var(--border-gold)) 1;
+            box-shadow: 
+                inset 0 0 40px rgba(0, 0, 0, 0.8),
+                0 0 30px rgba(139, 0, 0, 0.4),
+                0 10px 50px rgba(0, 0, 0, 0.9);
+            animation: fadeInUp 0.8s ease-out 0.2s both, borderPulse 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 215, 0, 0.1) 50%, 
+                transparent 70%);
+            background-size: 200% 200%;
+            animation: shimmer 6s linear infinite;
+            z-index: -1;
+            border-radius: 4px;
+        }
+
+        .auth-container::after {
+            content: '★';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            color: var(--gold);
+            text-shadow: 0 0 20px var(--gold), 0 0 30px var(--gold-bright);
+            animation: float 2s ease-in-out infinite;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 2rem;
+            border: 2px solid var(--border-gold);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 1rem;
+            background: linear-gradient(180deg, rgba(45, 45, 45, 0.8) 0%, rgba(26, 26, 26, 0.9) 100%);
+            border: none;
+            color: var(--text-light);
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-weight: 600;
+            position: relative;
+            border-right: 1px solid var(--border-gold);
+        }
+
+        .auth-tab:last-child {
+            border-right: none;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(180deg, rgba(139, 0, 0, 0.6) 0%, rgba(79, 0, 0, 0.8) 100%);
+            color: var(--gold);
+            box-shadow: 
+                inset 0 0 20px rgba(255, 0, 0, 0.3),
+                0 0 20px rgba(139, 0, 0, 0.5);
+            text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold-dark);
+        }
+
+        .auth-tab:hover:not(.active) {
+            background: linear-gradient(180deg, rgba(60, 60, 60, 0.8) 0%, rgba(40, 40, 40, 0.9) 100%);
+            color: var(--gold-bright);
+            text-shadow: 0 0 5px var(--gold);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--gold);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-weight: 600;
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        input {
+            width: 100%;
+            padding: 1rem;
+            background: 
+                linear-gradient(180deg, rgba(10, 10, 10, 0.9) 0%, rgba(20, 20, 20, 0.95) 100%);
+            border: 2px solid var(--border-gold);
+            border-radius: 2px;
+            color: var(--text-light);
+            font-family: 'Philosopher', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 0 rgba(139, 0, 0, 0);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.8),
+                0 0 15px rgba(139, 0, 0, 0.6),
+                0 0 5px var(--gold);
+            background: rgba(20, 10, 10, 0.95);
+        }
+
+        input::placeholder {
+            color: rgba(212, 197, 160, 0.3);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: 
+                linear-gradient(180deg, 
+                    rgba(139, 0, 0, 0.9) 0%, 
+                    rgba(100, 0, 0, 1) 50%,
+                    rgba(60, 0, 0, 1) 100%);
+            border: 2px solid var(--gold-dark);
+            border-radius: 2px;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 215, 0, 0.3),
+                inset 0 -1px 10px rgba(0, 0, 0, 0.5),
+                0 5px 20px rgba(139, 0, 0, 0.6),
+                0 0 30px rgba(139, 0, 0, 0.3);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8), 0 2px 4px rgba(0, 0, 0, 0.9);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            border-color: var(--gold);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 215, 0, 0.5),
+                inset 0 -1px 10px rgba(0, 0, 0, 0.5),
+                0 8px 30px rgba(139, 0, 0, 0.8),
+                0 0 40px rgba(255, 68, 0, 0.5);
+            text-shadow: 0 0 15px var(--gold-bright), 0 0 25px var(--gold), 0 2px 4px rgba(0, 0, 0, 0.9);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 
+                inset 0 1px 0 rgba(0, 0, 0, 0.5),
+                inset 0 5px 10px rgba(0, 0, 0, 0.7),
+                0 3px 15px rgba(139, 0, 0, 0.6);
+        }
+
+        .btn-logout {
+            background: linear-gradient(180deg, rgba(45, 45, 45, 0.9) 0%, rgba(26, 26, 26, 1) 100%);
+            border: 2px solid var(--gold-dark);
+            color: var(--gold);
+            padding: 0.8rem 1.5rem;
+            width: auto;
+            margin-left: auto;
+            display: block;
+            box-shadow: 
+                inset 0 1px 0 rgba(139, 114, 85, 0.3),
+                0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-logout:hover {
+            background: linear-gradient(180deg, rgba(139, 0, 0, 0.6) 0%, rgba(79, 0, 0, 0.9) 100%);
+            border-color: var(--gold);
+        }
+
+        .user-info {
+            text-align: right;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .user-name {
+            font-size: 1.4rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px var(--gold), 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .calculator-card {
+            background: 
+                linear-gradient(135deg, 
+                    rgba(26, 26, 26, 0.95) 0%, 
+                    rgba(15, 15, 15, 0.98) 50%,
+                    rgba(10, 10, 10, 0.99) 100%);
+            border-radius: 4px;
+            padding: 2rem;
+            border: 3px solid;
+            border-image: linear-gradient(135deg, var(--border-gold), var(--gold-dark), var(--border-gold)) 1;
+            box-shadow: 
+                inset 0 0 40px rgba(0, 0, 0, 0.9),
+                0 0 20px rgba(139, 0, 0, 0.4),
+                0 10px 40px rgba(0, 0, 0, 0.8);
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.8s ease-out both;
+            position: relative;
+        }
+
+        .calculator-card::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            background: linear-gradient(45deg, 
+                transparent 30%, 
+                rgba(255, 68, 0, 0.2) 50%, 
+                transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s;
+            z-index: -1;
+            border-radius: 4px;
+        }
+
+        .calculator-card:hover::before {
+            opacity: 1;
+            animation: shimmer 2s linear infinite;
+        }
+
+        .calculator-card:nth-child(1) { animation-delay: 0.5s; }
+        .calculator-card:nth-child(2) { animation-delay: 0.6s; }
+        .calculator-card:nth-child(3) { animation-delay: 0.7s; }
+        .calculator-card:nth-child(4) { animation-delay: 0.8s; }
+        .calculator-card:nth-child(5) { animation-delay: 0.9s; }
+
+        .calculator-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                inset 0 0 50px rgba(0, 0, 0, 0.9),
+                0 0 40px rgba(255, 68, 0, 0.6),
+                0 15px 60px rgba(139, 0, 0, 0.7);
+            border-image: linear-gradient(135deg, var(--gold), var(--gold-bright), var(--gold)) 1;
+        }
+
+        .karat-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 
+                0 0 10px var(--gold),
+                0 0 20px var(--gold-dark),
+                0 0 30px rgba(255, 215, 0, 0.3),
+                2px 2px 4px rgba(0, 0, 0, 0.9);
+            position: relative;
+        }
+
+        .karat-badge {
+            font-size: 0.75rem;
+            padding: 0.4rem 0.9rem;
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.8) 0%, rgba(79, 0, 0, 0.9) 100%);
+            border: 1px solid var(--gold-dark);
+            border-radius: 2px;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 215, 0, 0.2),
+                0 0 15px rgba(139, 0, 0, 0.5);
+            animation: ember 2s ease-in-out infinite;
+        }
+
+        .purity {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.7;
+            font-family: 'Philosopher', sans-serif;
+            letter-spacing: 0.05em;
+        }
+
+        .calc-input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .calc-input-group input {
+            background: 
+                linear-gradient(180deg, rgba(5, 5, 5, 0.95) 0%, rgba(15, 15, 15, 0.98) 100%);
+            font-size: 1.1rem;
+            padding: 0.9rem;
+            border: 2px solid rgba(139, 114, 85, 0.6);
+            box-shadow: 
+                inset 0 3px 10px rgba(0, 0, 0, 0.9),
+                0 0 10px rgba(0, 0, 0, 0.5);
+            color: var(--gold-bright);
+            font-weight: 600;
+        }
+
+        .calc-input-group input:focus {
+            border-color: var(--gold);
+            background: rgba(20, 5, 5, 0.98);
+            box-shadow: 
+                inset 0 3px 10px rgba(0, 0, 0, 0.9),
+                0 0 20px rgba(139, 0, 0, 0.6),
+                0 0 10px var(--gold);
+        }
+
+        .price-display {
+            background: 
+                linear-gradient(135deg, 
+                    rgba(139, 0, 0, 0.3) 0%, 
+                    rgba(79, 0, 0, 0.4) 50%,
+                    rgba(40, 0, 0, 0.5) 100%);
+            border: 2px solid var(--gold);
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 
+                inset 0 0 30px rgba(255, 68, 0, 0.2),
+                inset 0 2px 0 rgba(255, 215, 0, 0.3),
+                0 0 30px rgba(255, 215, 0, 0.4),
+                0 5px 20px rgba(0, 0, 0, 0.8);
+            position: relative;
+            animation: borderPulse 3s ease-in-out infinite;
+        }
+
+        .price-display::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, 
+                var(--gold) 0%, 
+                var(--gold-bright) 50%, 
+                var(--gold) 100%);
+            z-index: -1;
+            border-radius: 4px;
+            opacity: 0.5;
+            animation: shimmer 3s linear infinite;
+        }
+
+        .price-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--gold-bright);
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            font-family: 'Cinzel', serif;
+            text-shadow: 0 0 10px var(--gold);
+        }
+
+        .price-amount {
+            font-family: 'Cinzel', serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: var(--gold);
+            line-height: 1;
+            text-shadow: 
+                0 0 20px var(--gold-bright),
+                0 0 40px var(--gold),
+                0 0 60px rgba(255, 215, 0, 0.5),
+                3px 3px 6px rgba(0, 0, 0, 0.9);
+            letter-spacing: 0.05em;
+        }
+
+        .price-breakdown {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid rgba(139, 114, 85, 0.4);
+            font-size: 0.85rem;
+            color: var(--text-light);
+            opacity: 0.9;
+        }
+
+        .breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-family: 'Philosopher', sans-serif;
+            padding: 0.3rem 0;
+        }
+
+        .breakdown-item span:first-child {
+            color: rgba(212, 197, 160, 0.7);
+        }
+
+        .breakdown-item span:last-child {
+            color: var(--gold);
+            font-weight: 600;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+
+        .error-message {
+            background: 
+                linear-gradient(135deg, rgba(139, 0, 0, 0.4) 0%, rgba(79, 0, 0, 0.6) 100%);
+            border: 2px solid rgba(220, 38, 38, 0.8);
+            color: #ffc9c9;
+            padding: 1rem;
+            border-radius: 2px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+            font-family: 'Philosopher', sans-serif;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(220, 38, 38, 0.4);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 3.5rem;
+            }
+
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .auth-container {
+                padding: 2rem;
+                margin: 2rem 1rem;
+            }
+
+            .karat-title {
+                font-size: 1.8rem;
+            }
+
+            .price-amount {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <header>
+                <h1>Gold Calculator</h1>
+                <div class="subtitle">Precious Metals Price Calculator</div>
+            </header>
+
+            <!-- Authentication View -->
+            <div v-if="!isLoggedIn" class="auth-container">
+                <div class="auth-tabs">
+                    <button 
+                        class="auth-tab" 
+                        :class="{ active: authMode === 'login' }"
+                        @click="authMode = 'login'">
+                        Login
+                    </button>
+                    <button 
+                        class="auth-tab" 
+                        :class="{ active: authMode === 'register' }"
+                        @click="authMode = 'register'">
+                        Register
+                    </button>
+                </div>
+
+                <div v-if="errorMessage" class="error-message">
+                    {{ errorMessage }}
+                </div>
+
+                <form @submit.prevent="authMode === 'login' ? login() : register()">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input 
+                            type="email" 
+                            v-model="authForm.email" 
+                            required
+                            placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input 
+                            type="password" 
+                            v-model="authForm.password" 
+                            required
+                            placeholder="••••••••">
+                    </div>
+                    <div v-if="authMode === 'register'" class="form-group">
+                        <label>Full Name</label>
+                        <input 
+                            type="text" 
+                            v-model="authForm.name" 
+                            required
+                            placeholder="John Doe">
+                    </div>
+                    <button type="submit" class="btn">
+                        {{ authMode === 'login' ? 'Login' : 'Create Account' }}
+                    </button>
+                </form>
+            </div>
+
+            <!-- Calculator View -->
+            <div v-else>
+                <div class="user-info">
+                    <div class="user-name">Welcome, {{ currentUser.name }}</div>
+                    <button @click="logout" class="btn btn-logout">Logout</button>
+                </div>
+
+                <div class="calculator-grid">
+                    <!-- 24K Gold -->
+                    <div class="calculator-card">
+                        <div class="karat-title">
+                            24K
+                            <span class="karat-badge">Pure Gold</span>
+                        </div>
+                        <div class="purity">99.9% Purity</div>
+                        
+                        <div class="calc-input-group">
+                            <label>Price per Gram (₱)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k24.pricePerGram"
+                                @input="calculate('k24')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Weight (grams)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k24.grams"
+                                @input="calculate('k24')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Making Charge (%)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k24.makingCharge"
+                                @input="calculate('k24')"
+                                step="0.1"
+                                placeholder="0.0">
+                        </div>
+
+                        <div class="price-display">
+                            <div class="price-label">Total Price</div>
+                            <div class="price-amount">₱{{ formatPrice(calculators.k24.total) }}</div>
+                            <div class="price-breakdown">
+                                <div class="breakdown-item">
+                                    <span>Base Price:</span>
+                                    <span>₱{{ formatPrice(calculators.k24.basePrice) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Making Charge:</span>
+                                    <span>₱{{ formatPrice(calculators.k24.makingChargeAmount) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Tax (12%):</span>
+                                    <span>₱{{ formatPrice(calculators.k24.tax) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 22K Gold -->
+                    <div class="calculator-card">
+                        <div class="karat-title">
+                            22K
+                            <span class="karat-badge">Premium</span>
+                        </div>
+                        <div class="purity">91.6% Purity</div>
+                        
+                        <div class="calc-input-group">
+                            <label>Price per Gram (₱)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k22.pricePerGram"
+                                @input="calculate('k22')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Weight (grams)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k22.grams"
+                                @input="calculate('k22')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Making Charge (%)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k22.makingCharge"
+                                @input="calculate('k22')"
+                                step="0.1"
+                                placeholder="0.0">
+                        </div>
+
+                        <div class="price-display">
+                            <div class="price-label">Total Price</div>
+                            <div class="price-amount">₱{{ formatPrice(calculators.k22.total) }}</div>
+                            <div class="price-breakdown">
+                                <div class="breakdown-item">
+                                    <span>Base Price:</span>
+                                    <span>₱{{ formatPrice(calculators.k22.basePrice) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Making Charge:</span>
+                                    <span>₱{{ formatPrice(calculators.k22.makingChargeAmount) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Tax (12%):</span>
+                                    <span>₱{{ formatPrice(calculators.k22.tax) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 18K Gold -->
+                    <div class="calculator-card">
+                        <div class="karat-title">
+                            18K
+                            <span class="karat-badge">Standard</span>
+                        </div>
+                        <div class="purity">75% Purity</div>
+                        
+                        <div class="calc-input-group">
+                            <label>Price per Gram (₱)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k18.pricePerGram"
+                                @input="calculate('k18')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Weight (grams)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k18.grams"
+                                @input="calculate('k18')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Making Charge (%)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k18.makingCharge"
+                                @input="calculate('k18')"
+                                step="0.1"
+                                placeholder="0.0">
+                        </div>
+
+                        <div class="price-display">
+                            <div class="price-label">Total Price</div>
+                            <div class="price-amount">₱{{ formatPrice(calculators.k18.total) }}</div>
+                            <div class="price-breakdown">
+                                <div class="breakdown-item">
+                                    <span>Base Price:</span>
+                                    <span>₱{{ formatPrice(calculators.k18.basePrice) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Making Charge:</span>
+                                    <span>₱{{ formatPrice(calculators.k18.makingChargeAmount) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Tax (12%):</span>
+                                    <span>₱{{ formatPrice(calculators.k18.tax) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 14K Gold -->
+                    <div class="calculator-card">
+                        <div class="karat-title">
+                            14K
+                            <span class="karat-badge">Budget</span>
+                        </div>
+                        <div class="purity">58.3% Purity</div>
+                        
+                        <div class="calc-input-group">
+                            <label>Price per Gram (₱)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k14.pricePerGram"
+                                @input="calculate('k14')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Weight (grams)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k14.grams"
+                                @input="calculate('k14')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Making Charge (%)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k14.makingCharge"
+                                @input="calculate('k14')"
+                                step="0.1"
+                                placeholder="0.0">
+                        </div>
+
+                        <div class="price-display">
+                            <div class="price-label">Total Price</div>
+                            <div class="price-amount">₱{{ formatPrice(calculators.k14.total) }}</div>
+                            <div class="price-breakdown">
+                                <div class="breakdown-item">
+                                    <span>Base Price:</span>
+                                    <span>₱{{ formatPrice(calculators.k14.basePrice) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Making Charge:</span>
+                                    <span>₱{{ formatPrice(calculators.k14.makingChargeAmount) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Tax (12%):</span>
+                                    <span>₱{{ formatPrice(calculators.k14.tax) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 10K Gold -->
+                    <div class="calculator-card">
+                        <div class="karat-title">
+                            10K
+                            <span class="karat-badge">Economy</span>
+                        </div>
+                        <div class="purity">41.7% Purity</div>
+                        
+                        <div class="calc-input-group">
+                            <label>Price per Gram (₱)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k10.pricePerGram"
+                                @input="calculate('k10')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Weight (grams)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k10.grams"
+                                @input="calculate('k10')"
+                                step="0.01"
+                                placeholder="0.00">
+                        </div>
+                        
+                        <div class="calc-input-group">
+                            <label>Making Charge (%)</label>
+                            <input 
+                                type="number" 
+                                v-model.number="calculators.k10.makingCharge"
+                                @input="calculate('k10')"
+                                step="0.1"
+                                placeholder="0.0">
+                        </div>
+
+                        <div class="price-display">
+                            <div class="price-label">Total Price</div>
+                            <div class="price-amount">₱{{ formatPrice(calculators.k10.total) }}</div>
+                            <div class="price-breakdown">
+                                <div class="breakdown-item">
+                                    <span>Base Price:</span>
+                                    <span>₱{{ formatPrice(calculators.k10.basePrice) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Making Charge:</span>
+                                    <span>₱{{ formatPrice(calculators.k10.makingChargeAmount) }}</span>
+                                </div>
+                                <div class="breakdown-item">
+                                    <span>Tax (12%):</span>
+                                    <span>₱{{ formatPrice(calculators.k10.tax) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isLoggedIn: false,
+                    authMode: 'login',
+                    errorMessage: '',
+                    currentUser: null,
+                    authForm: {
+                        email: '',
+                        password: '',
+                        name: ''
+                    },
+                    calculators: {
+                        k24: this.createCalculator(),
+                        k22: this.createCalculator(),
+                        k18: this.createCalculator(),
+                        k14: this.createCalculator(),
+                        k10: this.createCalculator()
+                    }
+                };
+            },
+            methods: {
+                createCalculator() {
+                    return {
+                        pricePerGram: 0,
+                        grams: 0,
+                        makingCharge: 0,
+                        basePrice: 0,
+                        makingChargeAmount: 0,
+                        tax: 0,
+                        total: 0
+                    };
+                },
+                calculate(karat) {
+                    const calc = this.calculators[karat];
+                    
+                    // Calculate base price
+                    calc.basePrice = calc.pricePerGram * calc.grams;
+                    
+                    // Calculate making charge
+                    calc.makingChargeAmount = calc.basePrice * (calc.makingCharge / 100);
+                    
+                    // Calculate subtotal
+                    const subtotal = calc.basePrice + calc.makingChargeAmount;
+                    
+                    // Calculate 12% tax
+                    calc.tax = subtotal * 0.12;
+                    
+                    // Calculate total
+                    calc.total = subtotal + calc.tax;
+                    
+                    // Save calculation to localStorage
+                    this.saveCalculation(karat);
+                },
+                formatPrice(price) {
+                    return price.toLocaleString('en-PH', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                },
+                register() {
+                    this.errorMessage = '';
+                    
+                    if (!this.authForm.email || !this.authForm.password || !this.authForm.name) {
+                        this.errorMessage = 'Please fill in all fields';
+                        return;
+                    }
+                    
+                    // Get existing users
+                    const users = JSON.parse(localStorage.getItem('goldCalcUsers') || '[]');
+                    
+                    // Check if user exists
+                    if (users.find(u => u.email === this.authForm.email)) {
+                        this.errorMessage = 'Email already registered';
+                        return;
+                    }
+                    
+                    // Create new user
+                    const newUser = {
+                        id: Date.now().toString(),
+                        email: this.authForm.email,
+                        password: this.authForm.password, // In production, hash this!
+                        name: this.authForm.name,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    users.push(newUser);
+                    localStorage.setItem('goldCalcUsers', JSON.stringify(users));
+                    
+                    // Auto login
+                    this.currentUser = { ...newUser };
+                    delete this.currentUser.password;
+                    this.isLoggedIn = true;
+                    localStorage.setItem('goldCalcCurrentUser', JSON.stringify(this.currentUser));
+                    
+                    this.resetAuthForm();
+                    this.loadCalculations();
+                },
+                login() {
+                    this.errorMessage = '';
+                    
+                    if (!this.authForm.email || !this.authForm.password) {
+                        this.errorMessage = 'Please fill in all fields';
+                        return;
+                    }
+                    
+                    const users = JSON.parse(localStorage.getItem('goldCalcUsers') || '[]');
+                    const user = users.find(u => 
+                        u.email === this.authForm.email && 
+                        u.password === this.authForm.password
+                    );
+                    
+                    if (!user) {
+                        this.errorMessage = 'Invalid email or password';
+                        return;
+                    }
+                    
+                    this.currentUser = { ...user };
+                    delete this.currentUser.password;
+                    this.isLoggedIn = true;
+                    localStorage.setItem('goldCalcCurrentUser', JSON.stringify(this.currentUser));
+                    
+                    this.resetAuthForm();
+                    this.loadCalculations();
+                },
+                logout() {
+                    this.isLoggedIn = false;
+                    this.currentUser = null;
+                    localStorage.removeItem('goldCalcCurrentUser');
+                    this.resetCalculators();
+                },
+                resetAuthForm() {
+                    this.authForm = {
+                        email: '',
+                        password: '',
+                        name: ''
+                    };
+                    this.errorMessage = '';
+                },
+                resetCalculators() {
+                    this.calculators = {
+                        k24: this.createCalculator(),
+                        k22: this.createCalculator(),
+                        k18: this.createCalculator(),
+                        k14: this.createCalculator(),
+                        k10: this.createCalculator()
+                    };
+                },
+                saveCalculation(karat) {
+                    if (!this.currentUser) return;
+                    
+                    const key = `goldCalc_${this.currentUser.id}_${karat}`;
+                    localStorage.setItem(key, JSON.stringify(this.calculators[karat]));
+                },
+                loadCalculations() {
+                    if (!this.currentUser) return;
+                    
+                    Object.keys(this.calculators).forEach(karat => {
+                        const key = `goldCalc_${this.currentUser.id}_${karat}`;
+                        const saved = localStorage.getItem(key);
+                        if (saved) {
+                            this.calculators[karat] = JSON.parse(saved);
+                        }
+                    });
+                },
+                checkAuth() {
+                    const savedUser = localStorage.getItem('goldCalcCurrentUser');
+                    if (savedUser) {
+                        this.currentUser = JSON.parse(savedUser);
+                        this.isLoggedIn = true;
+                        this.loadCalculations();
+                    }
+                }
+            },
+            mounted() {
+                this.checkAuth();
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
